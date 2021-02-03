@@ -7,7 +7,7 @@ const HTTPS_PORT = process.env.HTTPS_PORT || 5000;
 dotenv.config();
 app.use(
   cors({
-    origin: ["https://localhost:3000"],
+    origin: ["http://localhost:3000"],
     credentials: true,
     methods: ["GET", "POST", "OPTIONS", "PUT"],
   })
