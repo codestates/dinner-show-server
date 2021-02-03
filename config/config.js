@@ -24,3 +24,4 @@ module.exports = {
     dialect: "mysql",
   },
 };
+// two-weeks-project.cuiuxyl7o7dg.ap-northeast-2.rds.amazonaws.com

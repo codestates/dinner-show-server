@@ -18,7 +18,6 @@ module.exports = {
         content: "냉면,소고기,돼지,삼겹살,치킨",
         heart_number: "12",
         tag: "여름",
-        userId: "1",
         createdAt: new Date(),
         updatedAt: new Date(),
       },

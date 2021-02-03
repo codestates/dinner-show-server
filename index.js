@@ -7,7 +7,9 @@ const HTTPS_PORT = process.env.HTTPS_PORT || 5000;
 dotenv.config();
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: [
+      "'http://dinner-show-client.s3-website.ap-northeast-2.amazonaws.com'",
+    ],
     credentials: true,
     methods: ["GET", "POST", "OPTIONS", "PUT"],
   })
