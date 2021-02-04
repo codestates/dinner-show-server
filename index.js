@@ -13,12 +13,12 @@ app.use(
   cors({
     origin: ["*"],
     credentials: true,
-    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    methods: ["GET", "POST", "OPTIONS", "DELETE"],
   })
 );
 
 app.get("/deploytest", async (req, res) => {
-  let result = await user.findAll();
+  let result = await User.findAll();
   console.log("ok");
   res.status(200).send(result);
 });
@@ -29,13 +29,15 @@ app.listen(HTTPS_PORT, () => {
 
 ///
 
-const { content, user } = require("./models/index.js");
+const { content: Content, user: User } = require("./models/index.js");
 
+app.post("/contents", async (req, res) => {
+  const { user_id: userId, title, content, tag } = req.body;
+  await Content.create({ title, content, tag, userId });
+  res.send("content 등록하기");
+});
 app.get("/contents/:id", (req, res) => {
   res.send("content 불러오기" + req.params.id);
-});
-app.post("/contents", (req, res) => {
-  res.send("content 등록하기");
 });
 app.post("/contents/update", (req, res) => {
   res.send("content 수정하기 or 하트넘버만 교체");
@@ -68,7 +70,7 @@ app.post("/users/signup", (req, res) => {
 });
 
 app.get("/userinfo", async (req, res) => {
-  let result = await user.findAll();
+  let result = await User.findAll();
   console.log("ok");
   res.status(200).send(result);
 });
