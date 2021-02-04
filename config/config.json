@@ -10,7 +10,7 @@
     "username": "dinnershow",
     "password": "dinnershow123",
     "database": "dinnerShow",
-    "host": "127.0.0.1",
+    "host": "two-weeks-project.cuiuxyl7o7dg.ap-northeast-2.rds.amazonaws.com",
     "dialect": "mysql"
   },
   "production": {
