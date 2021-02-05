@@ -11,17 +11,14 @@ module.exports = {
      *   isBetaMember: false
      * }], {});
      */
-    return queryInterface.bulkInsert("contents", [
+    return queryInterface.bulkInsert("comments", [
       {
         id: 0,
-        title: "냉면",
-        content: "냉면,소고기,돼지,삼겹살,치킨",
-        heart_number: "12",
-        tag: "여름",
-        location: "제주",
-        img: "asdf.jpg",
+        name: "seung-ik",
+        text: "delicious wowowowowow",
         createdAt: new Date(),
         updatedAt: new Date(),
+        // contentId: 0,
       },
     ]);
   },
@@ -33,6 +30,6 @@ module.exports = {
      * Example:
      * await queryInterface.bulkDelete('People', null, {});
      */
-    return queryInterface.bulkDelete("contents", null, {});
+    return queryInterface.bulkDelete("comments", null, {});
   },
 };
