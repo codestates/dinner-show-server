@@ -3,9 +3,11 @@ const cors = require("cors");
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
+const cookieParser = require("cookie-parser");
 const HTTPS_PORT = process.env.HTTPS_PORT || 5000;
 
 dotenv.config();
+app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -29,7 +31,11 @@ app.listen(HTTPS_PORT, () => {
 
 ///
 
-const { content: Content, user: User } = require("./models/index.js");
+const {
+  content: Content,
+  user: User,
+  comment: Comment,
+} = require("./models/index.js");
 
 app.post("/contents", async (req, res) => {
   const { user_id: userId, title, content, tag } = req.body;
@@ -59,12 +65,6 @@ app.delete("/comment:id", (req, res) => {
   res.send("comment 삭제");
 });
 
-app.post("/users/login", (req, res) => {
-  res.send("user login 구현");
-});
-app.post("/users/signout", (req, res) => {
-  res.send("user signout 구현");
-});
 app.post("/users/signup", (req, res) => {
   res.send("user login 구현");
 });
@@ -79,6 +79,47 @@ app.post("/userinfo", (req, res) => {
 });
 app.delete("/userinfo", (req, res) => {
   res.send("userinfo 삭제");
+});
+
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  sendAccessToken,
+  sendRefreshToken,
+} = require("./tokenFunction");
+
+app.post("/users/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    let data = await User.findOne({
+      where: {
+        email: email,
+        user_password: password,
+      },
+    });
+
+    if (!data) {
+      res.status(400).send({ data: null, message: "not Authorized" });
+    }
+    delete data.dataValues.user_password;
+    let accessTk = generateAccessToken(data.dataValues);
+    let refreshTk = generateRefreshToken(data.dataValues);
+
+    sendRefreshToken(res, refreshTk);
+    sendAccessToken(res, accessTk);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+app.post("/users/logout", (req, res) => {
+  if (!req.cookies.refreshToken)
+    res.status(400).json({ data: null, message: "not authorized" });
+  else {
+    res.clearCookie("refreshToken");
+    res.json({ data: null, message: "logout Success" });
+  }
 });
 
 module.exports = app;
