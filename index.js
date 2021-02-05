@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
-    origin: ["*"],
+    origin: "*",
     credentials: true,
     methods: ["GET", "POST", "OPTIONS", "DELETE"],
   })
@@ -37,43 +37,164 @@ const {
   comment: Comment,
 } = require("./models/index.js");
 
-app.post("/contents", async (req, res) => {
-  const { user_id: userId, title, content, tag } = req.body;
-  await Content.create({ title, content, tag, userId });
-  res.send("content 등록하기");
+app.post("/contents", (req, res) => {
+  const {
+    userId = null,
+    title,
+    content,
+    tag = null,
+    img = null,
+    location = null,
+  } = req.body;
+  if (!title || !content) {
+    res.status(400).send({ message: "fill the content and title" });
+  } else {
+    Content.build({
+      title,
+      content,
+      tag,
+      img,
+      location,
+      userId,
+    })
+      .save()
+      .then(function (newContent) {
+        res.status(200).send({ message: "post content success" });
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
 });
-app.get("/contents/:id", (req, res) => {
-  res.send("content 불러오기" + req.params.id);
+
+app.get("/contents", async (req, res) => {
+  let data = await Content.findAll();
+  res.status(200).send({ data: data, message: "ok" });
 });
+
+app.get("/contents/:id", async (req, res) => {
+  let data = await Content.findAll({
+    where: {
+      id: req.params.id,
+    },
+  });
+  if (!data) {
+    res.status(400).send({ data: null, message: "no contents" });
+  }
+  res.status(200).send(data);
+});
+
 app.post("/contents/update", (req, res) => {
   res.send("content 수정하기 or 하트넘버만 교체");
 });
-app.delete("/contents", (req, res) => {
-  res.send("content 삭제하기");
-});
-app.get("/contents/search/:text", (req, res) => {
-  res.send("search 로 content 조회");
+app.delete("/contents/:id", (req, res) => {
+  console.log("ok");
+  console.log(req.params.id);
+  if (req.params.id) {
+    Content.destroy({ where: { id: req.params.id } }).then(() => {
+      res.status(200).send({ message: "delete data" });
+    });
+  } else {
+    res.status(400).send({ data: null, message: "fail delete content" });
+  }
 });
 
-app.post("/comment", (req, res) => {
-  res.send("comment 등록");
+const sequelize = require("sequelize");
+const Op = sequelize.Op;
+
+app.get("/contents/search/:text", async (req, res) => {
+  console.log(req.params.text);
+  let searchWord = req.params.text;
+  const data = await Content.findAll({
+    where: {
+      [Op.or]: {
+        title: {
+          [Op.like]: "%" + searchWord + "%",
+        },
+        content: {
+          [Op.like]: "%" + searchWord + "%",
+        },
+        tag: {
+          [Op.like]: "%" + searchWord + "%",
+        },
+      },
+    },
+  });
+
+  res.send({ data: data, message: "" });
 });
-app.post("/comment/update", (req, res) => {
+
+app.post("/comment", async (req, res) => {
+  const { contentId, name = "비회원", text } = req.body;
+  if (!contentId || !text)
+    return res.status(400).send({ message: "fill the contentId or text" });
+  try {
+    let data = await Comment.create({
+      contentId,
+      name,
+      text,
+    });
+    res.status(200).send({ data: data, message: "post comment success" });
+  } catch (err) {
+    console.log(err);
+  }
+});
+app.get("/comment/:contentId", async (req, res) => {
+  const data = await Comment.findAll({
+    where: {
+      contentId: req.params.contentId,
+    },
+  });
+  res.status(200).send({ data: data, message: "get comments" });
+});
+app.post("/comment/:id", (req, res) => {
   res.send("comment 수정");
 });
 app.delete("/comment:id", (req, res) => {
-  res.send("comment 삭제");
-});
-
-app.post("/users/signup", (req, res) => {
-  res.send("user login 구현");
-});
-
-app.get("/userinfo", async (req, res) => {
-  let result = await User.findAll();
   console.log("ok");
-  res.status(200).send(result);
+  console.log(req.params.id);
+  if (req.params.id) {
+    Content.destroy({ where: { id: req.params.id } }).then(() => {
+      res.status(200).send({ message: "delete data" });
+    });
+  } else {
+    res.status(400).send({ data: null, message: "fail delete content" });
+  }
 });
+
+app.post("/users/signup", async (req, res) => {
+  const {
+    user_password,
+    full_name,
+    birth = null,
+    sex = null,
+    email,
+    phone_number = null,
+  } = req.body;
+  if (!user_password || !full_name || !email) {
+    return res.status(400).send({ message: "filled the required" });
+  }
+  User.create({
+    user_password,
+    full_name,
+    birth,
+    sex,
+    email,
+    phone_number,
+  })
+    .then((data) => {
+      res.status(200).send({ data: data, message: "success signup" });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+app.get("/userinfo/:id", async (req, res) => {
+  const data = await User.findOne({ where: { id: req.params.id } });
+  res.status(200).send({ data: data, message: "bring userinfo" });
+});
+
 app.post("/userinfo", (req, res) => {
   res.send("수정버튼시 구현유저인포");
 });
