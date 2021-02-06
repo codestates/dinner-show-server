@@ -4,7 +4,7 @@ const express = require("express");
 const morgan = require("morgan");
 const app = express();
 const cookieParser = require("cookie-parser");
-const HTTPS_PORT = process.env.HTTPS_PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 dotenv.config();
 app.use(cookieParser());
@@ -20,16 +20,14 @@ app.use(
 );
 
 app.get("/deploytest", async (req, res) => {
-  let result = await User.findAll();
   console.log("ok");
-  res.status(200).send(result);
+  res.status(200).send("hello deploy");
 });
 
-app.listen(HTTPS_PORT, () => {
-  console.log("server connect ");
+app.listen(PORT, () => {
+  console.log(`개발환경 : ${process.env.NODE_ENV}`);
+  console.log(`server connect ${PORT}`);
 });
-
-///
 
 const {
   content: Content,
@@ -69,11 +67,14 @@ app.post("/contents", (req, res) => {
 
 app.get("/contents", async (req, res) => {
   let data = await Content.findAll();
+  if (!data) {
+    res.status(400).send({ message: "no content" });
+  }
   res.status(200).send({ data: data, message: "ok" });
 });
 
 app.get("/contents/:id", async (req, res) => {
-  let data = await Content.findAll({
+  let data = await Content.findOne({
     where: {
       id: req.params.id,
     },
@@ -81,11 +82,39 @@ app.get("/contents/:id", async (req, res) => {
   if (!data) {
     res.status(400).send({ data: null, message: "no contents" });
   }
-  res.status(200).send(data);
+  res.status(200).send({ data: data, message: "ok" });
+});
+
+const sequelize = require("sequelize");
+const Op = sequelize.Op;
+
+app.get("/contents/search/:searchword", async (req, res) => {
+  let searchWord = req.params.searchword;
+  try {
+    const data = await Content.findAll({
+      where: {
+        [Op.or]: {
+          title: {
+            [Op.like]: "%" + searchWord + "%",
+          },
+          content: {
+            [Op.like]: "%" + searchWord + "%",
+          },
+          tag: {
+            [Op.like]: "%" + searchWord + "%",
+          },
+        },
+      },
+    });
+    res.status(200).send({ data: data, message: "ok" });
+  } catch (err) {
+    console.log(err);
+    res.status(404).send({ message: "search fail" });
+  }
 });
 
 app.post("/contents/update/:id", async (req, res) => {
-  const { title, content, location = null, img = null } = req.body;
+  const { title, content, tag = null, location = null, img = null } = req.body;
   if (!title || !content)
     return res.status(400).send({ message: "fill the required" });
   const data = await Content.findOne({ where: { id: req.params.id } });
@@ -93,6 +122,7 @@ app.post("/contents/update/:id", async (req, res) => {
   data.content = content;
   data.location = location;
   data.img = img;
+  data.tag = tag;
   data.save();
   res.status(200).send({ data: data, message: "success update content" });
 });
@@ -123,29 +153,13 @@ app.delete("/contents/:id", (req, res) => {
   }
 });
 
-const sequelize = require("sequelize");
-const Op = sequelize.Op;
-
-app.get("/contents/search/:text", async (req, res) => {
-  console.log(req.params.text);
-  let searchWord = req.params.text;
-  const data = await Content.findAll({
+app.get("/comment/:contentId", async (req, res) => {
+  const data = await Comment.findAll({
     where: {
-      [Op.or]: {
-        title: {
-          [Op.like]: "%" + searchWord + "%",
-        },
-        content: {
-          [Op.like]: "%" + searchWord + "%",
-        },
-        tag: {
-          [Op.like]: "%" + searchWord + "%",
-        },
-      },
+      contentId: req.params.contentId,
     },
   });
-
-  res.send({ data: data, message: "" });
+  res.status(200).send({ data: data, message: "get comments" });
 });
 
 app.post("/comment", async (req, res) => {
@@ -162,14 +176,6 @@ app.post("/comment", async (req, res) => {
   } catch (err) {
     console.log(err);
   }
-});
-app.get("/comment/:contentId", async (req, res) => {
-  const data = await Comment.findAll({
-    where: {
-      contentId: req.params.contentId,
-    },
-  });
-  res.status(200).send({ data: data, message: "get comments" });
 });
 
 app.post("/comment/:id", async (req, res) => {
@@ -192,11 +198,11 @@ app.delete("/comment/:id", (req, res) => {
       res.status(200).send({ message: "delete comment data" });
     });
   } else {
-    res.status(400).send({ data: null, message: "fail delete comment" });
+    res.status(400).send({ message: "fail delete comment" });
   }
 });
 
-app.post("/users/signup", async (req, res) => {
+app.post("/users/signup", (req, res) => {
   const {
     user_password,
     full_name,
@@ -224,11 +230,6 @@ app.post("/users/signup", async (req, res) => {
     });
 });
 
-app.get("/userinfo/:id", async (req, res) => {
-  const data = await User.findOne({ where: { id: req.params.id } });
-  res.status(200).send({ data: data, message: "bring userinfo" });
-});
-
 app.post("/userinfo/:id", async (req, res) => {
   const {
     user_password,
@@ -250,6 +251,11 @@ app.post("/userinfo/:id", async (req, res) => {
   data.phone_number = phone_number;
   await data.save();
   res.send({ data: data, message: "success update userinfo" });
+});
+
+app.get("/userinfo/:id", async (req, res) => {
+  const data = await User.findOne({ where: { id: req.params.id } });
+  res.status(200).send({ data: data, message: "bring userinfo" });
 });
 
 app.delete("/userinfo/:id", (req, res) => {
