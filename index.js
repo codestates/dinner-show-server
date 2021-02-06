@@ -4,7 +4,7 @@ const express = require("express");
 const morgan = require("morgan");
 const app = express();
 const cookieParser = require("cookie-parser");
-const HTTPS_PORT = process.env.HTTPS_PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 dotenv.config();
 app.use(cookieParser());
@@ -24,8 +24,9 @@ app.get("/deploytest", async (req, res) => {
   res.status(200).send("hello deploy");
 });
 
-app.listen(HTTPS_PORT, () => {
-  console.log("server connect ");
+app.listen(PORT, () => {
+  console.log(`개발환경 : ${process.env.NODE_ENV}`);
+  console.log(`server connect ${PORT}`);
 });
 
 const {
@@ -229,11 +230,6 @@ app.post("/users/signup", (req, res) => {
     });
 });
 
-app.get("/userinfo/:id", async (req, res) => {
-  const data = await User.findOne({ where: { id: req.params.id } });
-  res.status(200).send({ data: data, message: "bring userinfo" });
-});
-
 app.post("/userinfo/:id", async (req, res) => {
   const {
     user_password,
@@ -255,6 +251,11 @@ app.post("/userinfo/:id", async (req, res) => {
   data.phone_number = phone_number;
   await data.save();
   res.send({ data: data, message: "success update userinfo" });
+});
+
+app.get("/userinfo/:id", async (req, res) => {
+  const data = await User.findOne({ where: { id: req.params.id } });
+  res.status(200).send({ data: data, message: "bring userinfo" });
 });
 
 app.delete("/userinfo/:id", (req, res) => {
