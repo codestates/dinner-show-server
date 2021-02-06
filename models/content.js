@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      location: DataTypes.STRING,
+      img: DataTypes.STRING,
       tag: DataTypes.STRING,
     },
     {}
