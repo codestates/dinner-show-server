@@ -84,12 +84,36 @@ app.get("/contents/:id", async (req, res) => {
   res.status(200).send(data);
 });
 
-app.post("/contents/update", (req, res) => {
-  res.send("content 수정하기 or 하트넘버만 교체");
+app.post("/contents/update/:id", async (req, res) => {
+  const { title, content, location = null, img = null } = req.body;
+  if (!title || !content)
+    return res.status(400).send({ message: "fill the required" });
+  const data = await Content.findOne({ where: { id: req.params.id } });
+  data.title = title;
+  data.content = content;
+  data.location = location;
+  data.img = img;
+  data.save();
+  res.status(200).send({ data: data, message: "success update content" });
 });
+
+app.post("/contents/changeheartnum/:contentId", async (req, res) => {
+  const { heart } = req.body;
+  if (heart === "plus") {
+    let data = await Content.findOne({ where: { id: req.params.contentId } });
+    data.heart_number = data.heart_number + 1;
+    data.save();
+    res.status(200).send({ data: data, message: "success increase heartNum" });
+  } else if (heart === "minus") {
+    let data = await Content.findOne({ where: { id: req.params.contentId } });
+    data.heart_number = data.heart_number - 1 < 0 ? 0 : data.heart_number - 1;
+    data.save();
+    res.status(200).send({ data: data, message: "success decrease heartNum" });
+  }
+  res.status(400).send({ message: " plus or minus ???" });
+});
+
 app.delete("/contents/:id", (req, res) => {
-  console.log("ok");
-  console.log(req.params.id);
   if (req.params.id) {
     Content.destroy({ where: { id: req.params.id } }).then(() => {
       res.status(200).send({ message: "delete data" });
@@ -147,18 +171,28 @@ app.get("/comment/:contentId", async (req, res) => {
   });
   res.status(200).send({ data: data, message: "get comments" });
 });
-app.post("/comment/:id", (req, res) => {
-  res.send("comment 수정");
+
+app.post("/comment/:id", async (req, res) => {
+  const { name = "비회원", text } = req.body;
+  if (!text) {
+    return res.status(400).send({ message: "filled the required" });
+  }
+  const data = await Comment.findOne({ where: { id: req.params.id } });
+  data.name = name;
+  data.text = text;
+  await data.save();
+  res.status(200).send({ data: data, message: "success update comment" });
 });
-app.delete("/comment:id", (req, res) => {
-  console.log("ok");
-  console.log(req.params.id);
+
+app.delete("/comment/:id", (req, res) => {
   if (req.params.id) {
-    Content.destroy({ where: { id: req.params.id } }).then(() => {
-      res.status(200).send({ message: "delete data" });
+    Comment.destroy({ where: { id: req.params.id } }).then((data) => {
+      if (data === 0)
+        return res.status(400).send({ message: "fail delete comment" });
+      res.status(200).send({ message: "delete comment data" });
     });
   } else {
-    res.status(400).send({ data: null, message: "fail delete content" });
+    res.status(400).send({ data: null, message: "fail delete comment" });
   }
 });
 
@@ -195,11 +229,39 @@ app.get("/userinfo/:id", async (req, res) => {
   res.status(200).send({ data: data, message: "bring userinfo" });
 });
 
-app.post("/userinfo", (req, res) => {
-  res.send("수정버튼시 구현유저인포");
+app.post("/userinfo/:id", async (req, res) => {
+  const {
+    user_password,
+    full_name,
+    email,
+    birth = null,
+    sex = null,
+    phone_number = null,
+  } = req.body;
+  if (!user_password || !full_name || !email) {
+    return res.status(400).send({ message: "filled the required" });
+  }
+  const data = await User.findOne({ where: { id: req.params.id } });
+  data.user_password = user_password;
+  data.full_name = full_name;
+  data.email = email;
+  data.birth = birth;
+  data.sex = sex;
+  data.phone_number = phone_number;
+  await data.save();
+  res.send({ data: data, message: "success update userinfo" });
 });
-app.delete("/userinfo", (req, res) => {
-  res.send("userinfo 삭제");
+
+app.delete("/userinfo/:id", (req, res) => {
+  if (req.params.id) {
+    User.destroy({ where: { id: req.params.id } }).then((data) => {
+      if (data === 0)
+        return res.status(400).send({ message: "fail delete userinfo" });
+      res.status(200).send({ message: "delete userinfo" });
+    });
+  } else {
+    res.status(400).send({ data: null, message: "fail delete userinfo" });
+  }
 });
 
 const {
