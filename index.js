@@ -40,6 +40,7 @@ app.post("/contents", (req, res) => {
     userId = null,
     title,
     content,
+    heart_number = 0,
     tag = null,
     img = null,
     location = null,
@@ -51,6 +52,7 @@ app.post("/contents", (req, res) => {
       title,
       content,
       tag,
+      heart_number,
       img,
       location,
       userId,
@@ -139,8 +141,9 @@ app.post("/contents/changeheartnum/:contentId", async (req, res) => {
     data.heart_number = data.heart_number - 1 < 0 ? 0 : data.heart_number - 1;
     data.save();
     res.status(200).send({ data: data, message: "success decrease heartNum" });
+  } else {
+    res.status(400).send({ message: " plus or minus ???" });
   }
-  res.status(400).send({ message: " plus or minus ???" });
 });
 
 app.delete("/contents/:id", (req, res) => {
@@ -275,6 +278,9 @@ const {
   generateRefreshToken,
   sendAccessToken,
   sendRefreshToken,
+  isAuthorized,
+  checkRefeshToken,
+  resendAccessToken,
 } = require("./tokenFunction");
 
 app.post("/users/login", async (req, res) => {
@@ -287,11 +293,21 @@ app.post("/users/login", async (req, res) => {
         user_password: password,
       },
     });
+    let contentData = await Content.findAll({
+      where: {
+        userId: data.dataValues.id,
+      },
+    });
+    data.dataValues.userContents = [];
+    contentData.forEach((el) => {
+      data.dataValues.userContents.push(el.dataValues);
+    });
 
     if (!data) {
       res.status(400).send({ data: null, message: "not Authorized" });
     }
     delete data.dataValues.user_password;
+    // console.log(data.dataValues);
     let accessTk = generateAccessToken(data.dataValues);
     let refreshTk = generateRefreshToken(data.dataValues);
 
@@ -300,6 +316,44 @@ app.post("/users/login", async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+});
+
+app.get("/accesstokenrequest", (req, res) => {
+  const accessTokenData = isAuthorized(req);
+  if (!accessTokenData) {
+    return res
+      .status(401)
+      .send({ message: "no token in req.headers['authorization']" });
+  }
+  res.status(200).send({ data: accessTokenData, message: "ok" });
+});
+
+app.get("/refreshtokenrequest", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken)
+    return res.status(401).send({ message: "refresh token not provided" });
+  const refreshTokenData = checkRefeshToken(refreshToken);
+  if (!refreshTokenData) {
+    return res
+      .status(401)
+      .send({ message: "invalid refresh token, pleaes log in again" });
+  }
+  let data = await User.findOne({
+    where: {
+      id: refreshTokenData.id,
+    },
+  });
+  let contentData = await Content.findAll({
+    where: {
+      userId: refreshTokenData.id,
+    },
+  });
+  data.dataValues.userContents = [];
+  contentData.forEach((el) => {
+    data.dataValues.userContents.push(el.dataValues);
+  });
+  const newAccessTk = generateAccessToken(data.dataValues);
+  resendAccessToken(res, newAccessTk, data.dataValues);
 });
 
 app.post("/users/logout", (req, res) => {
