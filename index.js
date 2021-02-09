@@ -4,7 +4,7 @@ const express = require("express");
 const morgan = require("morgan");
 const app = express();
 const cookieParser = require("cookie-parser");
-const HTTPS_PORT = process.env.HTTPS_PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 dotenv.config();
 app.use(cookieParser());
@@ -20,16 +20,14 @@ app.use(
 );
 
 app.get("/deploytest", async (req, res) => {
-  let result = await User.findAll();
   console.log("ok");
-  res.status(200).send(result);
+  res.status(200).send("hello deploy");
 });
 
-app.listen(HTTPS_PORT, () => {
-  console.log("server connect ");
+app.listen(PORT, () => {
+  console.log(`개발환경 : ${process.env.NODE_ENV}`);
+  console.log(`server connect ${PORT}`);
 });
-
-///
 
 const {
   content: Content,
@@ -42,6 +40,7 @@ app.post("/contents", (req, res) => {
     userId = null,
     title,
     content,
+    heart_number = 0,
     tag = null,
     img = null,
     location = null,
@@ -53,6 +52,7 @@ app.post("/contents", (req, res) => {
       title,
       content,
       tag,
+      heart_number,
       img,
       location,
       userId,
@@ -69,11 +69,14 @@ app.post("/contents", (req, res) => {
 
 app.get("/contents", async (req, res) => {
   let data = await Content.findAll();
+  if (!data) {
+    res.status(400).send({ message: "no content" });
+  }
   res.status(200).send({ data: data, message: "ok" });
 });
 
 app.get("/contents/:id", async (req, res) => {
-  let data = await Content.findAll({
+  let data = await Content.findOne({
     where: {
       id: req.params.id,
     },
@@ -81,15 +84,69 @@ app.get("/contents/:id", async (req, res) => {
   if (!data) {
     res.status(400).send({ data: null, message: "no contents" });
   }
-  res.status(200).send(data);
+  res.status(200).send({ data: data, message: "ok" });
 });
 
-app.post("/contents/update", (req, res) => {
-  res.send("content 수정하기 or 하트넘버만 교체");
+const sequelize = require("sequelize");
+const Op = sequelize.Op;
+
+app.get("/contents/search/:searchword", async (req, res) => {
+  let searchWord = req.params.searchword;
+  try {
+    const data = await Content.findAll({
+      where: {
+        [Op.or]: {
+          title: {
+            [Op.like]: "%" + searchWord + "%",
+          },
+          content: {
+            [Op.like]: "%" + searchWord + "%",
+          },
+          tag: {
+            [Op.like]: "%" + searchWord + "%",
+          },
+        },
+      },
+    });
+    res.status(200).send({ data: data, message: "ok" });
+  } catch (err) {
+    console.log(err);
+    res.status(404).send({ message: "search fail" });
+  }
 });
+
+app.post("/contents/update/:id", async (req, res) => {
+  const { title, content, tag = null, location = null, img = null } = req.body;
+  if (!title || !content)
+    return res.status(400).send({ message: "fill the required" });
+  const data = await Content.findOne({ where: { id: req.params.id } });
+  data.title = title;
+  data.content = content;
+  data.location = location;
+  data.img = img;
+  data.tag = tag;
+  data.save();
+  res.status(200).send({ data: data, message: "success update content" });
+});
+
+app.post("/contents/changeheartnum/:contentId", async (req, res) => {
+  const { heart } = req.body;
+  if (heart === "plus") {
+    let data = await Content.findOne({ where: { id: req.params.contentId } });
+    data.heart_number = data.heart_number + 1;
+    data.save();
+    res.status(200).send({ data: data, message: "success increase heartNum" });
+  } else if (heart === "minus") {
+    let data = await Content.findOne({ where: { id: req.params.contentId } });
+    data.heart_number = data.heart_number - 1 < 0 ? 0 : data.heart_number - 1;
+    data.save();
+    res.status(200).send({ data: data, message: "success decrease heartNum" });
+  } else {
+    res.status(400).send({ message: " plus or minus ???" });
+  }
+});
+
 app.delete("/contents/:id", (req, res) => {
-  console.log("ok");
-  console.log(req.params.id);
   if (req.params.id) {
     Content.destroy({ where: { id: req.params.id } }).then(() => {
       res.status(200).send({ message: "delete data" });
@@ -99,29 +156,13 @@ app.delete("/contents/:id", (req, res) => {
   }
 });
 
-const sequelize = require("sequelize");
-const Op = sequelize.Op;
-
-app.get("/contents/search/:text", async (req, res) => {
-  console.log(req.params.text);
-  let searchWord = req.params.text;
-  const data = await Content.findAll({
+app.get("/comment/:contentId", async (req, res) => {
+  const data = await Comment.findAll({
     where: {
-      [Op.or]: {
-        title: {
-          [Op.like]: "%" + searchWord + "%",
-        },
-        content: {
-          [Op.like]: "%" + searchWord + "%",
-        },
-        tag: {
-          [Op.like]: "%" + searchWord + "%",
-        },
-      },
+      contentId: req.params.contentId,
     },
   });
-
-  res.send({ data: data, message: "" });
+  res.status(200).send({ data: data, message: "get comments" });
 });
 
 app.post("/comment", async (req, res) => {
@@ -139,30 +180,32 @@ app.post("/comment", async (req, res) => {
     console.log(err);
   }
 });
-app.get("/comment/:contentId", async (req, res) => {
-  const data = await Comment.findAll({
-    where: {
-      contentId: req.params.contentId,
-    },
-  });
-  res.status(200).send({ data: data, message: "get comments" });
+
+app.post("/comment/:id", async (req, res) => {
+  const { name = "비회원", text } = req.body;
+  if (!text) {
+    return res.status(400).send({ message: "filled the required" });
+  }
+  const data = await Comment.findOne({ where: { id: req.params.id } });
+  data.name = name;
+  data.text = text;
+  await data.save();
+  res.status(200).send({ data: data, message: "success update comment" });
 });
-app.post("/comment/:id", (req, res) => {
-  res.send("comment 수정");
-});
-app.delete("/comment:id", (req, res) => {
-  console.log("ok");
-  console.log(req.params.id);
+
+app.delete("/comment/:id", (req, res) => {
   if (req.params.id) {
-    Content.destroy({ where: { id: req.params.id } }).then(() => {
-      res.status(200).send({ message: "delete data" });
+    Comment.destroy({ where: { id: req.params.id } }).then((data) => {
+      if (data === 0)
+        return res.status(400).send({ message: "fail delete comment" });
+      res.status(200).send({ message: "delete comment data" });
     });
   } else {
-    res.status(400).send({ data: null, message: "fail delete content" });
+    res.status(400).send({ message: "fail delete comment" });
   }
 });
 
-app.post("/users/signup", async (req, res) => {
+app.post("/users/signup", (req, res) => {
   const {
     user_password,
     full_name,
@@ -190,16 +233,44 @@ app.post("/users/signup", async (req, res) => {
     });
 });
 
+app.post("/userinfo/:id", async (req, res) => {
+  const {
+    user_password,
+    full_name,
+    email,
+    birth = null,
+    sex = null,
+    phone_number = null,
+  } = req.body;
+  if (!user_password || !full_name || !email) {
+    return res.status(400).send({ message: "filled the required" });
+  }
+  const data = await User.findOne({ where: { id: req.params.id } });
+  data.user_password = user_password;
+  data.full_name = full_name;
+  data.email = email;
+  data.birth = birth;
+  data.sex = sex;
+  data.phone_number = phone_number;
+  await data.save();
+  res.send({ data: data, message: "success update userinfo" });
+});
+
 app.get("/userinfo/:id", async (req, res) => {
   const data = await User.findOne({ where: { id: req.params.id } });
   res.status(200).send({ data: data, message: "bring userinfo" });
 });
 
-app.post("/userinfo", (req, res) => {
-  res.send("수정버튼시 구현유저인포");
-});
-app.delete("/userinfo", (req, res) => {
-  res.send("userinfo 삭제");
+app.delete("/userinfo/:id", (req, res) => {
+  if (req.params.id) {
+    User.destroy({ where: { id: req.params.id } }).then((data) => {
+      if (data === 0)
+        return res.status(400).send({ message: "fail delete userinfo" });
+      res.status(200).send({ message: "delete userinfo" });
+    });
+  } else {
+    res.status(400).send({ data: null, message: "fail delete userinfo" });
+  }
 });
 
 const {
@@ -207,6 +278,9 @@ const {
   generateRefreshToken,
   sendAccessToken,
   sendRefreshToken,
+  isAuthorized,
+  checkRefeshToken,
+  resendAccessToken,
 } = require("./tokenFunction");
 
 app.post("/users/login", async (req, res) => {
@@ -219,11 +293,21 @@ app.post("/users/login", async (req, res) => {
         user_password: password,
       },
     });
+    let contentData = await Content.findAll({
+      where: {
+        userId: data.dataValues.id,
+      },
+    });
+    data.dataValues.userContents = [];
+    contentData.forEach((el) => {
+      data.dataValues.userContents.push(el.dataValues);
+    });
 
     if (!data) {
       res.status(400).send({ data: null, message: "not Authorized" });
     }
     delete data.dataValues.user_password;
+    // console.log(data.dataValues);
     let accessTk = generateAccessToken(data.dataValues);
     let refreshTk = generateRefreshToken(data.dataValues);
 
@@ -232,6 +316,44 @@ app.post("/users/login", async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+});
+
+app.get("/accesstokenrequest", (req, res) => {
+  const accessTokenData = isAuthorized(req);
+  if (!accessTokenData) {
+    return res
+      .status(401)
+      .send({ message: "no token in req.headers['authorization']" });
+  }
+  res.status(200).send({ data: accessTokenData, message: "ok" });
+});
+
+app.get("/refreshtokenrequest", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken)
+    return res.status(401).send({ message: "refresh token not provided" });
+  const refreshTokenData = checkRefeshToken(refreshToken);
+  if (!refreshTokenData) {
+    return res
+      .status(401)
+      .send({ message: "invalid refresh token, pleaes log in again" });
+  }
+  let data = await User.findOne({
+    where: {
+      id: refreshTokenData.id,
+    },
+  });
+  let contentData = await Content.findAll({
+    where: {
+      userId: refreshTokenData.id,
+    },
+  });
+  data.dataValues.userContents = [];
+  contentData.forEach((el) => {
+    data.dataValues.userContents.push(el.dataValues);
+  });
+  const newAccessTk = generateAccessToken(data.dataValues);
+  resendAccessToken(res, newAccessTk, data.dataValues);
 });
 
 app.post("/users/logout", (req, res) => {
