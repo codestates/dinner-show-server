@@ -12,37 +12,39 @@ const {
   user: User,
   comment: Comment,
 } = require("../models/index.js");
+const bcrypt = require("bcrypt");
 
 module.exports = {
   postLogin: async (req, res) => {
     try {
       const { email, password } = req.body;
-
+      if (!email || !password)
+        return res.status(400).send({ data: null, message: "not Authorized" });
       let data = await User.findOne({
         where: {
           email: email,
-          user_password: password,
         },
       });
-      let contentData = await Content.findAll({
-        where: {
-          userId: data.dataValues.id,
-        },
-      });
-      data.dataValues.userContents = [];
-      contentData.forEach((el) => {
-        data.dataValues.userContents.push(el.dataValues);
-      });
+      const match = await bcrypt.compare(password, data.user_password);
+      if (match) {
+        let contentData = await Content.findAll({
+          where: {
+            userId: data.dataValues.id,
+          },
+        });
+        data.dataValues.userContents = [];
+        contentData.forEach((el) => {
+          data.dataValues.userContents.push(el.dataValues);
+        });
+        delete data.dataValues.user_password;
+        let accessTk = generateAccessToken(data.dataValues);
+        let refreshTk = generateRefreshToken(data.dataValues);
 
-      if (!data) {
+        sendRefreshToken(res, refreshTk);
+        sendAccessToken(res, accessTk);
+      } else {
         res.status(400).send({ data: null, message: "not Authorized" });
       }
-      delete data.dataValues.user_password;
-      let accessTk = generateAccessToken(data.dataValues);
-      let refreshTk = generateRefreshToken(data.dataValues);
-
-      sendRefreshToken(res, refreshTk);
-      sendAccessToken(res, accessTk);
     } catch (error) {
       console.log(error);
     }
