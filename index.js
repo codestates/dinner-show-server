@@ -13,13 +13,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
-    origin: "*",
+    origin: ["https://api.dinnershow.org"],
     credentials: true,
     methods: ["GET", "POST", "OPTIONS", "DELETE"],
   })
 );
-const indexRouter = require("./route.js");
-app.use("/", indexRouter);
+const router = require("./route.js");
+app.use("/", router);
 
 app.get("/deploytest", async (req, res) => {
   console.log("ok");
