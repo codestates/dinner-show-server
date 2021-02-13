@@ -16,15 +16,15 @@ const bcrypt = require("bcrypt");
 
 module.exports = {
   postLogin: async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      if (!email || !password)
-        return res.status(400).send({ data: null, message: "not Authorized" });
-      let data = await User.findOne({
-        where: {
-          email: email,
-        },
-      });
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(200).send({ data: null, message: "not Authorized" });
+    let data = await User.findOne({
+      where: {
+        email: email,
+      },
+    });
+    if (data) {
       const match = await bcrypt.compare(password, data.user_password);
       if (match) {
         let contentData = await Content.findAll({
@@ -39,14 +39,13 @@ module.exports = {
         delete data.dataValues.user_password;
         let accessTk = generateAccessToken(data.dataValues);
         let refreshTk = generateRefreshToken(data.dataValues);
-
         sendRefreshToken(res, refreshTk);
         sendAccessToken(res, accessTk);
       } else {
-        res.status(400).send({ data: null, message: "not Authorized" });
+        res.status(200).send({ data: null, message: "not Authorized" });
       }
-    } catch (error) {
-      console.log(error);
+    } else {
+      res.status(200).json({ data: null, message: "not Authorized" });
     }
   },
   getDataByToken: (req, res) => {
