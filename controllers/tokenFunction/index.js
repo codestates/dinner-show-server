@@ -17,6 +17,7 @@ module.exports = {
       .send({ data: { accessToken: newAccessTk, data: data }, message: "ok" });
   },
   sendRefreshToken: (res, refreshTk) => {
+    console.log("hello cookie");
     res.cookie("refreshToken", refreshTk, { httpOnly: true });
   },
   isAuthorized: (req) => {
