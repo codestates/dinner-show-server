@@ -88,7 +88,7 @@ module.exports = {
 
   postLogout: (req, res) => {
     if (!req.cookies.refreshToken)
-      res.status(400).json({ data: null, message: "not authorized" });
+      res.status(200).json({ data: null, message: "not authorized" });
     else {
       res.clearCookie("refreshToken");
       res.json({ data: null, message: "logout Success" });
