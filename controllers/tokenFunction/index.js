@@ -17,7 +17,6 @@ module.exports = {
       .send({ data: { accessToken: newAccessTk, data: data }, message: "ok" });
   },
   sendRefreshToken: (res, refreshTk) => {
-    console.log("hello cookie");
     res.cookie("refreshToken", refreshTk, { httpOnly: true });
   },
   isAuthorized: (req) => {
@@ -26,9 +25,7 @@ module.exports = {
     if (!authorization) {
       return null;
     }
-
     const token = authorization.split(" ")[1];
-    console.log(authorization);
     try {
       return verify(token, process.env.ACCESS_SECRET);
     } catch (err) {
