@@ -41,7 +41,6 @@ module.exports = {
     });
   },
   postUpdate: async (req, res) => {
-    console.log("post update userinfo");
     const {
       user_password,
       full_name,

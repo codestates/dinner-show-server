@@ -59,7 +59,6 @@ module.exports = {
     res.status(200).send({ data: accessTokenData, message: "ok" });
   },
   getDataByRtoken: async (req, res) => {
-    console.log("refresh token");
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken)
       return res.status(401).send({ message: "refresh token not provided" });

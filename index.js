@@ -21,11 +21,6 @@ app.use(
 const router = require("./route.js");
 app.use("/", router);
 
-app.get("/deploytest", async (req, res) => {
-  console.log("ok");
-  res.status(200).send("hello deploy");
-});
-
 app.listen(PORT, () => {
   console.log(`개발환경 : ${process.env.NODE_ENV}`);
   console.log(`server connect ${PORT}`);
