@@ -5,7 +5,6 @@ const {
 } = require("../models/index.js");
 module.exports = {
   get: async (req, res) => {
-    console.log("get comment");
     const data = await Comment.findAll({
       where: {
         contentId: req.params.contentId,
@@ -29,7 +28,6 @@ module.exports = {
     }
   },
   postUpdate: async (req, res) => {
-    console.log("update comment");
     const { name = "비회원", text } = req.body;
     if (!text) {
       return res.status(400).send({ message: "filled the required" });
@@ -41,7 +39,6 @@ module.exports = {
     res.status(200).send({ data: data, message: "success update comment" });
   },
   delete: (req, res) => {
-    console.log("delete comment");
     if (req.params.id) {
       Comment.destroy({ where: { id: req.params.id } }).then((data) => {
         if (data === 0)

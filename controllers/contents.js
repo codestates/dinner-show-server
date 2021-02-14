@@ -86,7 +86,6 @@ module.exports = {
     }
   },
   postUpdate: async (req, res) => {
-    console.log("post update contents");
     const {
       title,
       content,
@@ -106,7 +105,6 @@ module.exports = {
     res.status(200).send({ data: data, message: "success update content" });
   },
   postChangeHeart: async (req, res) => {
-    console.log("change heart num");
     const { heart } = req.body;
     if (heart === "plus") {
       let data = await Content.findOne({
@@ -131,7 +129,6 @@ module.exports = {
     }
   },
   delete: (req, res) => {
-    console.log("delete content");
     if (req.params.id) {
       Content.destroy({ where: { id: req.params.id } }).then(() => {
         res.status(200).send({ message: "delete data" });
