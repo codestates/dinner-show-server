@@ -8,7 +8,7 @@
 [![Github Badge](http://img.shields.io/badge/-오승익깃허브-c3c920?style=flat&link=https://github.com/seung-ik)](https://github.com/seung-ik)
 <br/>
 
-# dinner-show-client
+# dinner-show-server
 ![image](https://user-images.githubusercontent.com/54949453/107899247-180e8080-6f81-11eb-9c2d-5fdabc89f6c8.png)
 
 매일 먹어야 하는 식사. 매번 무엇을 먹어야 할지 고민을 하신적이 있나요?
@@ -45,8 +45,8 @@
 <img src = "https://user-images.githubusercontent.com/54949453/107902184-121c9d80-6f89-11eb-97f7-ab020bbe73b9.png" width="80%">
 
 ### Show Our Team Project Details
-: 더 자세한 내용을 함께 확인해보아요.
-[클라이언트: 깃허브 위키 링크](https://github.com/codestates/dinner-show-client/wiki)
-[서버: 깃허브 위키 링크](https://github.com/codestates/dinner-show-client/wiki)
+: 더 자세한 내용을 함께 확인해보아요.   
+[클라이언트(Client)](https://github.com/codestates/dinner-show-client/wiki)
+[서버(Server)](https://github.com/codestates/dinner-show-client/wiki)
 
 <br/><br/><br/><br/>
