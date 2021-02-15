@@ -1,5 +1,5 @@
-![issue badge](https://img.shields.io/badge/PROJECT-DinnerShow-black)
-![issue badge](https://img.shields.io/badge/PROJECT-DinnerShow-black) <br/>
+[![issue badge](https://img.shields.io/badge/PROJECT-DinnerShowClient-black?style=flat&link=https://github.com/codestates/dinner-show-client)](https://github.com/codestates/dinner-show-client)
+[![issue badge](https://img.shields.io/badge/PROJECT-DinnerShowServer-black?style=flat&link=https://github.com/codestates/dinner-show-server)](https://github.com/codestates/dinner-show-server)    <br/>
 [![Tistory Badge](http://img.shields.io/badge/-이정환블로그-c92020?style=flat&link=https://juicyjerry.tistory.com/)](https://juicyjerry.tistory.com/)
 [![Tistory Badge](http://img.shields.io/badge/-권익성블로그-c92020?style=flat&link=https://gwon8388.tistory.com/)](https://gwon8388.tistory.com/)
 [![Tistory Badge](http://img.shields.io/badge/-오승익블로그-c92020?style=flat&link=https://seungddak.tistory.com/)](https://seungddak.tistory.com/)
@@ -7,6 +7,8 @@
 [![Github Badge](http://img.shields.io/badge/-권익성깃허브-c3c920?style=flat&link=https://github.com/gwon5512)](https://github.com/gwon5512)
 [![Github Badge](http://img.shields.io/badge/-오승익깃허브-c3c920?style=flat&link=https://github.com/seung-ik)](https://github.com/seung-ik)
 <br/>
+
+
 
 # dinner-show-server
 ![image](https://user-images.githubusercontent.com/54949453/107899247-180e8080-6f81-11eb-9c2d-5fdabc89f6c8.png)
